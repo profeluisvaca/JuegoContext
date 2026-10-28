@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contexto Educativo - Algoritmos y Burbujas Informativas</title>
+  
+  <!-- FontAwesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Confetti.js -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #6366f1;
+      --accent-hover: #4f46e5;
+      --border-color: #334155;
+      
+      --color-green: #22c55e;
+      --color-yellow: #eab308;
+      --color-orange: #f97316;
+      --color-red: #ef4444;
+      
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1rem; }
+
+    .app-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 3rem; }
+
+    /* Header */
+    header { background: var(--bg-card); padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-icon { background: var(--accent-primary); width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: bold; }
+    .brand-title { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
+    .brand-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .btn { background: var(--bg-card-hover); color: var(--text-main); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+    .btn:hover { background: var(--border-color); transform: translateY(-1px); }
+    .btn-primary { background: var(--accent-primary); border-color: var(--accent-primary); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--color-green); border-color: var(--color-green); }
+    .btn-success:hover { filter: brightness(0.9); }
+    .btn-danger { background: var(--color-red); border-color: var(--color-red); color: white; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+
+    /* Stats Bar */
+    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.875rem; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--text-main); }
+    .stat-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; text-transform: uppercase; font-weight: 600; }
+
+    /* Modals & Screens */
+    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .modal-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 600px; padding: 1.75rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+
+    /* Input Forms */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-control { width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1rem; border-radius: var(--radius-md); font-size: 1rem; outline: none; transition: border-color 0.2s; }
+    .form-control:focus { border-color: var(--accent-primary); }
+
+    .guess-box { display: flex; gap: 0.5rem; position: relative; }
+    .guess-input { flex: 1; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+    .hint-box { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 1rem; font-size: 0.9rem; color: #a5b4fc; display: flex; align-items: flex-start; gap: 0.75rem; }
+
+    /* Attempts History */
+    .attempts-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+    .attempt-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .attempt-word { font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2; }
+    .attempt-rank { font-weight: 800; font-size: 1.1rem; z-index: 2; display: flex; align-items: center; gap: 0.4rem; }
+    .attempt-bar { position: absolute; left: 0; top: 0; bottom: 0; opacity: 0.18; z-index: 1; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    .rank-top1 { color: var(--color-green); }
+    .bar-top1 { background: var(--color-green); opacity: 0.35; }
+    .rank-close { color: var(--color-green); }
+    .bar-close { background: var(--color-green); }
+    .rank-medium { color: var(--color-yellow); }
+    .bar-medium { background: var(--color-yellow); }
+    .rank-warm { color: var(--color-orange); }
+    .bar-warm { background: var(--color-orange); }
+    .rank-far { color: var(--color-red); }
+    .bar-far { background: var(--color-red); }
+
+    /* Tables */
+    .ranking-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .ranking-table th { text-align: left; padding: 0.75rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+    .ranking-table td { padding: 0.75rem; font-size: 0.875rem; border-bottom: 1px solid var(--border-color); }
+    .ranking-table tr.current-user { background: rgba(99, 102, 241, 0.15); font-weight: bold; }
+    .badge-me { background: var(--accent-primary); color: white; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.65rem; margin-left: 0.4rem; text-transform: uppercase; }
+
+    /* Role Cards */
+    .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .role-card { background: var(--bg-main); border: 2px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .role-card:hover, .role-card.selected { border-color: var(--accent-primary); background: rgba(99, 102, 241, 0.1); }
+
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--bg-card); border: 1px solid var(--accent-primary); color: var(--text-main); padding: 0.875rem 1.25rem; border-radius: var(--radius-md); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 0.75rem; z-index: 200; transform: translateY(150%); transition: transform 0.3s ease; }
+    .toast.show { transform: translateY(0); }
+
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-4 { margin-top: 1rem; }
+    .badge { background: var(--border-color); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div>
+          <div class="brand-title" id="header-class-title">Aula: Clase Abierta</div>
+          <div class="brand-subtitle" id="header-user-role">Rol: Estudiante</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-sm" id="btn-leaderboard"><i class="fa-solid fa-trophy"></i> Ranking en Vivo</button>
+        <button class="btn btn-sm" id="btn-professor-panel" style="display: none;"><i class="fa-solid fa-lock"></i> Panel Profe</button>
+        <button class="btn btn-sm" id="btn-logout" title="Salir"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-alias">---</div>
+        <div class="stat-lbl">Participante</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-level">1 / 3</div>
+        <div class="stat-lbl">Nivel</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-attempts">0</div>
+        <div class="stat-lbl">Intentos (P2)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-time">00:00</div>
+        <div class="stat-lbl">Tiempo (P1)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--color-yellow);" id="stat-score">0 pts</div>
+        <div class="stat-lbl">Puntaje</div>
+      </div>
+    </div>
+
+    <!-- Pista / Categoría -->
+    <div class="hint-box">
+      <i class="fa-solid fa-lightbulb" style="font-size: 1.2rem; margin-top: 0.1rem;"></i>
+      <div>
+        <div style="font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;" id="game-category">Cargando...</div>
+        <div id="game-hint" style="margin-top: 0.2rem;">...</div>
+      </div>
+    </div>
+
+    <!-- Guesser Box -->
+    <div class="guess-box">
+      <input type="text" id="guess-input" class="form-control guess-input" placeholder="Escribe una palabra secreta..." autocomplete="off">
+      <button class="btn btn-primary" id="btn-guess"><i class="fa-solid fa-paper-plane"></i> Probar</button>
+    </div>
+
+    <!-- Victory Banner -->
+    <div id="victory-card" class="stat-card" style="background: rgba(34, 197, 94, 0.15); border-color: var(--color-green); display: none; padding: 1.25rem;">
+      <h3 style="color: var(--color-green); font-size: 1.3rem;"><i class="fa-solid fa-circle-check"></i> ¡Palabra Descubierta!</h3>
+      <p style="margin-top: 0.4rem; font-size: 0.9rem;" id="victory-msg">Has sumado excelentes puntos.</p>
+      <button class="btn btn-success mt-4" id="btn-next-word" style="margin: 1rem auto 0 auto;"><i class="fa-solid fa-arrow-right"></i> Siguiente Palabra Secreta</button>
+    </div>
+
+    <!-- Attempts History -->
+    <div>
+      <div class="flex-between" style="margin-bottom: 0.5rem;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Historial de Cercanía</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);" id="attempt-count-text">0 palabras</span>
+      </div>
+      <div class="attempts-list" id="attempts-container"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Login -->
+  <div class="modal-overlay active" id="modal-login">
+    <div class="modal-card text-center">
+      <div style="font-size: 3rem; color: var(--accent-primary); margin-bottom: 1rem;"><i class="fa-solid fa-users-rectangle"></i></div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">Juego de Contexto Educativo</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Selecciona tu rol para unirte a la clase con el código de partida.</p>
+      
+      <div class="role-cards">
+        <div class="role-card selected" id="card-role-student" onclick="selectRole('student')">
+          <i class="fa-solid fa-user-graduate" style="font-size: 1.8rem; color: var(--accent-primary); margin-bottom: 0.5rem;"></i>
+          <div style="font-weight: 700;">Estudiante</div>
+        </div>
+        <div class="role-card" id="card-role-professor" onclick="selectRole('professor')">
+          <i class="fa-solid fa-chalkboard-user" style="font-size: 1.8rem; color: var(--color-yellow); margin-bottom: 0.5rem;"></i>
+          <div style="font-weight: 700;">Profesor</div>
+        </div>
+      </div>
+
+      <form id="form-login">
+        <div class="form-group" id="group-alias">
+          <input type="text" id="login-alias" class="form-control" placeholder="Tu Nombre o Alias (ej. Sofía)" maxlength="20" style="text-align: center;">
+        </div>
+        <div class="form-group">
+          <input type="text" id="login-code" class="form-control" placeholder="Código de la Clase (ej. AULA2026)" required style="text-align: center; text-transform: uppercase; font-weight: 700;">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.875rem;"><i class="fa-solid fa-right-to-bracket"></i> Ingresar a la Partida</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Panel Profesor (Editor, Participantes y Compartir) -->
+  <div class="modal-overlay" id="modal-professor">
+    <div class="modal-card">
+      <div class="flex-between" style="margin-bottom: 1rem;">
+        <h3><i class="fa-solid fa-chalkboard-user" style="color: var(--color-yellow);"></i> Panel de Control del Profesor</h3>
+        <button class="btn btn-sm btn-close" onclick="closeModal('modal-professor')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <!-- Botones de Acción Global Profe -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+        <button class="btn btn-success" id="btn-share-ranking" style="flex: 1; justify-content: center;"><i class="fa-solid fa-share-nodes"></i> Copiar Ranking para Compartir</button>
+        <button class="btn btn-primary" id="btn-load-preset" style="flex: 1; justify-content: center;"><i class="fa-solid fa-download"></i> Cargar Preset Algoritmos</button>
+      </div>
+
+      <hr style="border-color: var(--border-color); margin: 1rem 0;">
+
+      <!-- Sección 1: Crear Preguntas -->
+      <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; color: var(--text-muted);">Añadir Nueva Palabra Secreta</h4>
+      <form id="form-add-question" style="margin-bottom: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <input type="text" id="new-word" class="form-control" placeholder="Palabra (ej. ALGORITMO)" required style="text-transform: uppercase;">
+          <input type="text" id="new-category" class="form-control" placeholder="Categoría" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="new-hint" class="form-control" placeholder="Pista descriptiva" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class="fa-solid fa-plus"></i> Agregar Nivel</button>
+      </form>
+
+      <!-- Sección 2: Lista de Estudiantes Conectados -->
+      <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; color: var(--text-muted);">Estudiantes en la Clase (<span id="prof-student-count">0</span>)</h4>
+        <div id="professor-students-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 150px; overflow-y: auto;"></div>
+      </div>
+
+      <!-- Sección 3: Preguntas de la Clase -->
+      <div>
+        <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; color: var(--text-muted);">Preguntas Configurados (<span id="prof-q-count">0</span>)</h4>
+        <div id="professor-questions-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 130px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Leaderboard Estudiantes -->
+  <div class="modal-overlay" id="modal-leaderboard">
+    <div class="modal-card">
+      <div class="flex-between" style="margin-bottom: 1rem;">
+        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-trophy" style="color: var(--color-yellow);"></i> Ranking de la Clase (Puntos)</h3>
+        <button class="btn btn-sm btn-close" onclick="closeModal('modal-leaderboard')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Puesto</th>
+              <th>Estudiante</th>
+              <th>Nivel</th>
+              <th>Intentos</th>
+              <th>Tiempo</th>
+              <th>Puntaje</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast-msg">
+    <i class="fa-solid fa-bell" style="color: var(--accent-primary);"></i>
+    <span id="toast-text">Notificación</span>
+  </div>
+
+  <script>
+    const PRESET_QUESTIONS = [
+      {
+        targetWord: "ALGORITMO",
+        category: "Tecnología y Redes Sociales",
+        hint: "Conjunto de reglas ordenadas que procesan datos para tomar decisiones automáticas.",
+        customDistances: { "CODIGO": 10, "INSTRUCCION": 25, "FORMULA": 40, "PROGRAMACION": 60, "DATOS": 85, "FEED": 180, "RECOMENDACION": 250, "PLATAFORMA": 350, "USUARIO": 500, "PANTALLA": 750, "INTERNET": 1000 }
+      },
+      {
+        targetWord: "BURBUJA",
+        category: "Comunicación y Sesgo Cognitivo",
+        hint: "Estado de aislamiento en el que solo se consume contenido ajustado a opiniones previas.",
+        customDistances: { "FILTRO": 15, "AISLAMIENTO": 35, "SESGO": 50, "CONFIRMACION": 70, "CAMARA": 100, "ECO": 120, "POLARIZACION": 200, "OPINION": 300, "INFORMACION": 450, "REDES": 600, "NOTICIAS": 1000 }
+      },
+      {
+        targetWord: "DESINFORMACION",
+        category: "Medios y Sociedad Digital",
+        hint: "Difusión masiva de datos engañosos o falsos para manipular a la opinión pública.",
+        customDistances: { "FALSEDAD": 20, "FAKE": 35, "MANIPULACION": 50, "BULO": 80, "ENGANO": 110, "NOTICIA": 200, "SENSACIONALISMO": 350, "DIFUSION": 500, "VIRAL": 650, "MEDIO": 800, "REDES": 1000 }
+      }
+    ];
+
+    let selectedRole = 'student';
+    let currentClassCode = localStorage.getItem('contexto_class_code') || 'AULA2026';
+    let currentUser = localStorage.getItem('contexto_alias') || '';
+    let currentLevel = 0;
+    let levelAttempts = [];
+    let totalAttemptsAcc = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let totalSeconds = 0;
+    let classScore = 0;
+
+    let questions = JSON.parse(localStorage.getItem(`contexto_questions_${currentClassCode}`)) || PRESET_QUESTIONS;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedRole = localStorage.getItem('contexto_role');
+      if (savedRole && currentUser) {
+        selectedRole = savedRole;
+        closeModal('modal-login');
+        initGameSession();
+      } else {
+        openModal('modal-login');
+      }
+      setupEvents();
+    });
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.getElementById('card-role-student').classList.toggle('selected', role === 'student');
+      document.getElementById('card-role-professor').classList.toggle('selected', role === 'professor');
+      
+      const aliasGroup = document.getElementById('group-alias');
+      if (role === 'professor') {
+        aliasGroup.style.display = 'none';
+        document.getElementById('login-alias').removeAttribute('required');
+      } else {
+        aliasGroup.style.display = 'block';
+        document.getElementById('login-alias').setAttribute('required', 'true');
+      }
+    }
+
+    function setupEvents() {
+      document.getElementById('form-login').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const codeVal = document.getElementById('login-code').value.trim().toUpperCase();
+        currentClassCode = codeVal;
+        localStorage.setItem('contexto_class_code', currentClassCode);
+
+        questions = JSON.parse(localStorage.getItem(`contexto_questions_${currentClassCode}`)) || PRESET_QUESTIONS;
+
+        if (selectedRole === 'professor') {
+          currentUser = "Profesor(a)";
+          localStorage.setItem('contexto_role', 'professor');
+          localStorage.setItem('contexto_alias', currentUser);
+          closeModal('modal-login');
+          openProfessorPanel();
+        } else {
+          const aliasVal = document.getElementById('login-alias').value.trim();
+          if (!aliasVal) return;
+          currentUser = aliasVal;
+          localStorage.setItem('contexto_role', 'student');
+          localStorage.setItem('contexto_alias', currentUser);
+          closeModal('modal-login');
+          initGameSession();
+        }
+      });
+
+      document.getElementById('btn-guess').addEventListener('click', handleGuess);
+      document.getElementById('guess-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleGuess();
+      });
+
+      document.getElementById('btn-leaderboard').addEventListener('click', () => {
+        renderLeaderboard();
+        openModal('modal-leaderboard');
+      });
+
+      document.getElementById('btn-professor-panel').addEventListener('click', openProfessorPanel);
+      document.getElementById('btn-share-ranking').addEventListener('click', shareRankingText);
+
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        localStorage.clear();
+        location.reload();
+      });
+
+      document.getElementById('btn-load-preset').addEventListener('click', () => {
+        questions = PRESET_QUESTIONS;
+        localStorage.setItem(`contexto_questions_${currentClassCode}`, JSON.stringify(questions));
+        showToast("¡Preset cargado!");
+        renderProfessorPanelContent();
+      });
+
+      document.getElementById('form-add-question').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const w = document.getElementById('new-word').value.trim().toUpperCase();
+        const cat = document.getElementById('new-category').value.trim();
+        const hint = document.getElementById('new-hint').value.trim();
+
+        if (!w || !cat || !hint) return;
+
+        questions.push({ targetWord: w, category: cat, hint: hint, customDistances: {} });
+        localStorage.setItem(`contexto_questions_${currentClassCode}`, JSON.stringify(questions));
+        
+        document.getElementById('form-add-question').reset();
+        showToast(`¡Nivel "${w}" agregado!`);
+        renderProfessorPanelContent();
+      });
+
+      document.getElementById('btn-next-word').addEventListener('click', () => {
+        if (currentLevel < questions.length - 1) {
+          currentLevel++;
+          loadLevel();
+        } else {
+          showToast("¡Has completado todos los niveles!");
+          renderLeaderboard();
+          openModal('modal-leaderboard');
+        }
+      });
+    }
+
+    function initGameSession() {
+      document.getElementById('header-class-title').textContent = `Aula: ${currentClassCode}`;
+      document.getElementById('header-user-role').textContent = selectedRole === 'professor' ? 'Rol: Profesor(a)' : `Rol: Estudiante (${currentUser})`;
+      document.getElementById('stat-alias').textContent = currentUser;
+
+      if (selectedRole === 'professor') {
+        document.getElementById('btn-professor-panel').style.display = 'flex';
+        openProfessorPanel();
+      } else {
+        document.getElementById('btn-professor-panel').style.display = 'none';
+        startTimer();
+        loadLevel();
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      startTime = Date.now();
+      totalSeconds = 0;
+      timerInterval = setInterval(() => {
+        totalSeconds++;
+        const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const secs = String(totalSeconds % 60).padStart(2, '0');
+        document.getElementById('stat-time').textContent = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function loadLevel() {
+      if (questions.length === 0) {
+        document.getElementById('game-category').textContent = "Sin preguntas";
+        document.getElementById('game-hint').textContent = "El profesor aún no ha cargado preguntas.";
+        return;
+      }
+
+      const q = questions[currentLevel];
+      levelAttempts = [];
+      
+      document.getElementById('stat-level').textContent = `${currentLevel + 1} / ${questions.length}`;
+      document.getElementById('stat-attempts').textContent = totalAttemptsAcc;
+      document.getElementById('game-category').textContent = q.category || 'General';
+      document.getElementById('game-hint').textContent = q.hint || 'Sin pista';
+      
+      document.getElementById('victory-card').style.display = 'none';
+      document.getElementById('btn-guess').disabled = false;
+      document.getElementById('guess-input').disabled = false;
+      document.getElementById('guess-input').value = '';
+      
+      renderAttempts();
+      updateScoreAndRanking();
+    }
+
+    function normalizeText(str) {
+      return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+    }
+
+    function calculateDistance(guess, targetObj) {
+      const g = normalizeText(guess);
+      const t = normalizeText(targetObj.targetWord);
+
+      if (g === t) return 1;
+      if (targetObj.customDistances && targetObj.customDistances[g]) return targetObj.customDistances[g];
+
+      let matrix = [];
+      for (let i = 0; i <= g.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= t.length; j++) matrix[0][j] = j;
+
+      for (let i = 1; i <= g.length; i++) {
+        for (let j = 1; j <= t.length; j++) {
+          if (g[i - 1] === t[j - 1]) matrix[i][j] = matrix[i - 1][j - 1];
+          else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+        }
+      }
+      return Math.max(2, Math.round(matrix[g.length][t.length] * 120 + Math.abs(g.length - t.length) * 50));
+    }
+
+    function handleGuess() {
+      if (selectedRole === 'professor') return;
+
+      const input = document.getElementById('guess-input');
+      const val = normalizeText(input.value);
+
+      if (!val) return;
+      if (levelAttempts.some(a => a.word === val)) {
+        showToast("Ya probaste esta palabra");
+        input.value = '';
+        return;
+      }
+
+      const q = questions[currentLevel];
+      const distance = calculateDistance(val, q);
+
+      totalAttemptsAcc++;
+      document.getElementById('stat-attempts').textContent = totalAttemptsAcc;
+
+      levelAttempts.push({ word: val, distance: distance });
+      levelAttempts.sort((a, b) => a.distance - b.distance);
+
+      input.value = '';
+      renderAttempts();
+      updateScoreAndRanking();
+
+      if (distance === 1) handleWin();
+    }
+
+    function handleWin() {
+      document.getElementById('victory-card').style.display = 'block';
+      document.getElementById('victory-msg').textContent = `¡Excelente! Encontraste "${questions[currentLevel].targetWord}".`;
+      document.getElementById('btn-guess').disabled = true;
+      document.getElementById('guess-input').disabled = true;
+
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      if (currentLevel >= questions.length - 1) {
+        document.getElementById('btn-next-word').textContent = "Ver Resultados Finales";
+      } else {
+        document.getElementById('btn-next-word').textContent = "Siguiente Palabra Secreta";
+      }
+      updateScoreAndRanking(true);
+    }
+
+    function updateScoreAndRanking(completedLevel = false) {
+      if (selectedRole === 'professor') return;
+
+      classScore = Math.max(100, ((currentLevel + (completedLevel ? 1 : 0)) * 1000) - (totalAttemptsAcc * 15) - (totalSeconds * 2));
+      document.getElementById('stat-score').textContent = `${classScore} pts`;
+
+      let allRankings = JSON.parse(localStorage.getItem(`contexto_ranking_${currentClassCode}`)) || [];
+      let existingIndex = allRankings.findIndex(u => u.alias === currentUser);
+
+      const studentData = {
+        alias: currentUser,
+        levelReached: currentLevel + (completedLevel ? 1 : 0),
+        attempts: totalAttemptsAcc,
+        timeSeconds: totalSeconds,
+        score: classScore,
+        updatedAt: Date.now()
+      };
+
+      if (existingIndex >= 0) allRankings[existingIndex] = studentData;
+      else allRankings.push(studentData);
+
+      allRankings.sort((a, b) => b.score - a.score);
+      localStorage.setItem(`contexto_ranking_${currentClassCode}`, JSON.stringify(allRankings));
+    }
+
+    function renderAttempts() {
+      const container = document.getElementById('attempts-container');
+      container.innerHTML = '';
+      document.getElementById('attempt-count-text').textContent = `${levelAttempts.length} palabras probadas`;
+
+      levelAttempts.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'attempt-item';
+        let percentage = Math.max(5, 100 - Math.round((item.distance / 1000) * 100));
+        let barClass = item.distance === 1 ? 'bar-top1' : item.distance <= 50 ? 'bar-close' : item.distance <= 200 ? 'bar-medium' : 'bar-warm';
+        let colorClass = item.distance === 1 ? 'rank-top1' : item.distance <= 50 ? 'rank-close' : item.distance <= 200 ? 'rank-medium' : 'rank-warm';
+
+        el.innerHTML = `
+          <div class="attempt-bar ${barClass}" style="width: ${percentage}%;"></div>
+          <span class="attempt-word">${item.word}</span>
+          <span class="attempt-rank ${colorClass}">${item.distance === 1 ? '<i class="fa-solid fa-trophy"></i> #1' : '#' + item.distance}</span>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function openProfessorPanel() {
+      renderProfessorPanelContent();
+      openModal('modal-professor');
+    }
+
+    function renderProfessorPanelContent() {
+      // Preguntas
+      const qContainer = document.getElementById('professor-questions-list');
+      qContainer.innerHTML = '';
+      document.getElementById('prof-q-count').textContent = questions.length;
+
+      questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background: var(--bg-main); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;';
+        item.innerHTML = `
+          <div><strong style="color: var(--accent-primary);">Nivel ${idx + 1}: ${q.targetWord}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${q.category})</span></div>
+          <button class="btn btn-sm btn-danger" onclick="deleteQuestion(${idx})"><i class="fa-solid fa-trash"></i></button>
+        `;
+        qContainer.appendChild(item);
+      });
+
+      // Estudiantes
+      const sContainer = document.getElementById('professor-students-list');
+      sContainer.innerHTML = '';
+      let allRankings = JSON.parse(localStorage.getItem(`contexto_ranking_${currentClassCode}`)) || [];
+      document.getElementById('prof-student-count').textContent = allRankings.length;
+
+      if (allRankings.length === 0) {
+        sContainer.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted);">Ningún estudiante conectado aún.</div>`;
+        return;
+      }
+
+      allRankings.forEach((s, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background: var(--bg-main); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;';
+        item.innerHTML = `
+          <div><strong>#${idx + 1} ${s.alias}</strong> - Nivel ${s.levelReached} (${s.score} pts)</div>
+          <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.alias}')"><i class="fa-solid fa-user-xmark"></i></button>
+        `;
+        sContainer.appendChild(item);
+      });
+    }
+
+    function deleteQuestion(idx) {
+      questions.splice(idx, 1);
+      localStorage.setItem(`contexto_questions_${currentClassCode}`, JSON.stringify(questions));
+      renderProfessorPanelContent();
+      showToast("Pregunta eliminada");
+    }
+
+    function deleteStudent(alias) {
+      let allRankings = JSON.parse(localStorage.getItem(`contexto_ranking_${currentClassCode}`)) || [];
+      allRankings = allRankings.filter(s => s.alias !== alias);
+      localStorage.setItem(`contexto_ranking_${currentClassCode}`, JSON.stringify(allRankings));
+      renderProfessorPanelContent();
+      showToast(`Estudiante ${alias} removido`);
+    }
+
+    function shareRankingText() {
+      let allRankings = JSON.parse(localStorage.getItem(`contexto_ranking_${currentClassCode}`)) || [];
+      if (allRankings.length === 0) {
+        showToast("No hay datos de ranking para compartir");
+        return;
+      }
+
+      let text = `🏆 *RANKING CLASE: ${currentClassCode}* 🏆\n`;
+      allRankings.forEach((r, i) => {
+        text += `${i+1}. *${r.alias}* - Nivel ${r.levelReached} (${r.score} pts)\n`;
+      });
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("¡Ranking copiado al portapapeles para compartir!");
+      }).catch(() => {
+        showToast("Error al copiar");
+      });
+    }
+
+    function renderLeaderboard() {
+      const tbody = document.getElementById('leaderboard-body');
+      tbody.innerHTML = '';
+      let allRankings = JSON.parse(localStorage.getItem(`contexto_ranking_${currentClassCode}`)) || [];
+
+      if (allRankings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">Aún no hay participaciones</td></tr>`;
+        return;
+      }
+
+      allRankings.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        if (row.alias === currentUser && selectedRole === 'student') tr.className = 'current-user';
+        const mins = String(Math.floor(row.timeSeconds / 60)).padStart(2, '0');
+        const secs = String(row.timeSeconds % 60).padStart(2, '0');
+
+        tr.innerHTML = `
+          <td><strong>#${idx + 1}</strong></td>
+          <td>${row.alias} ${row.alias === currentUser && selectedRole === 'student' ? '<span class="badge-me">Tú</span>' : ''}</td>
+          <td><span class="badge">Nivel ${row.levelReached}</span></td>
+          <td>${row.attempts}</td>
+          <td>${mins}:${secs}</td>
+          <td><strong style="color: var(--color-yellow);">${row.score} pts</strong></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function showToast(text) {
+      const toast = document.getElementById('toast-msg');
+      document.getElementById('toast-text').textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
